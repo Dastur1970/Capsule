@@ -1,0 +1,18 @@
+{
+    "name": "dastur/capsule",
+    "description": "A dependency injection container.",
+    "type": "library",
+    "require-dev": {
+        "phpunit/phpunit": "^6.2"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Dastur1970",
+            "email": "dastur1970@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.6"
+    }
+}
