@@ -20,7 +20,7 @@ namespace Capsule;
  * @license  https://opensource.org/licenses/MIT MIT License
  * @link     https://github.com/Dastur1970
  */
-interface ContainerInterface
+interface CapsuleInterface
 {
     /**
      * Get an instance from the container.
@@ -77,9 +77,49 @@ interface ContainerInterface
     /**
      * Whether or not a singleton has been resolved.
      *
-     * @param string $singleton The name of the singleton that you are checking.
+     * @param mixed $name The name or class of the
+     *                    singleton that you are checking.
      *
      * @return bool Whether or not it has already been resolved
      */
-    public function isResolved($singleton);
+    public function isResolved($name);
+
+    /**
+     * Determines whether or not a value has been bound to the container.
+     *
+     * @param mixed $name The name or class of the
+     *                    value that you are checking.
+     *
+     * @return bool Whether or not it has been bound.
+     */
+    public function isBound($name);
+
+    /**
+     * Determines whether or not a factory has been bound to the container.
+     *
+     * @param mixed $name The name or class of the
+     *                    factory that you are checking.
+     *
+     * @return bool Whether or not the factory has been bound.
+     */
+    public function isFactory($name);
+
+    /**
+     * Determines whether or not a singleton has been bound to the container.
+     *
+     * @param mixed $name The name or class of the
+     *                    singleton that you are checking.
+     *
+     * @return bool Whether or not the singleton has been bound.
+     */
+    public function isSingleton($name);
+
+    /**
+     * Determines whether or not a namespace has been bound to the container.
+     *
+     * @param mixed $name The namespace that you are checking.
+     *
+     * @return bool Whether or not the namespace has been bound.
+     */
+    public function hasNamespace($namespace);
 }

@@ -95,16 +95,23 @@ class Capsule implements CapsuleInterface
      */
     public function get($name)
     {
+        // If the developer is using a namespace to retrieve
+        // From the container, get the namespaces defined name.
+        $name = $this->convertNamespace($name);
+
         // Check if the value has been set. If not, throw an exception.
-        if (isset($this->values[$name])) {
+        if (! $this->isBound($name)) {
             throw new CapsuleException(
-                'Tried to get an instance from the '
-                . 'container that has not been set'
+                'Can not retrieve non-existant instance '
+                . $name . ' from the container.'
             );
         }
 
-        $name = isset($this->namespaces[$name])
-            ? $this->namespaces[$name] : $name;
+        // If what the developer is resolving is not a singleton
+        // Return a newly instantiated object.
+        if ($this->isFactory($name)) {
+            return $this->values[$name]($this);
+        }
 
         // If it has already been resolved, return the
         // Value without requiring instantiation.
@@ -112,16 +119,10 @@ class Capsule implements CapsuleInterface
             return $this->values[$name];
         }
 
-        // If what the developer is resolving is not a singleton
-        // Return a newly instantiated object.
-        if ($this->factories($name)) {
-            return $this->values[$name]($this);
-        }
-
         $callable = $this->values[$name];
-        $val = $this->values[$name] = $callable($this);
+        $obj = $this->values[$name] = $callable($this);
         $this->resolved[$name] = true;
-        return $val;
+        return $obj;
     }
 
     /**
@@ -139,22 +140,30 @@ class Capsule implements CapsuleInterface
      */
     public function bind($name, $namespace, $value = [], $singleton = false)
     {
-        // If it is a singleton, check if it has already been resolved
-        // If not, put it in the resolved array with a value of false.
+        // If this is attempting to override a resolved singleton,
+        // Throwna CapsuleException
+        if ($this->isResolved($name)) {
+            throw new CapsuleException(
+                'The singleton ' . $name . ' has already been resolved!'
+            );
+        }
+
+        // If it is a singleton set resolved to false.
         if ($singleton) {
-            if ($this->isResolved($name)) {
-                throw new CapsuleException(
-                    'The singleton ' . $name . ' has already been resolved!'
-                );
-            }
             $this->resolved[$name] = false;
         }
+
         // Check if the namespace given is an actual
         // Class. If not, throw an error.
-        if (! is_class($namespace)) {
+        if (! class_exists($namespace)) {
             throw new CapsuleException(
                 'Can not bind to non-existant class ' . $namespace
             );
+        }
+
+        // If the provided namespace was a string, then trim the left side.
+        if (is_string($namespace)) {
+            $namespace = ltrim($namespace, '\\');
         }
 
         // Whether or not it's a factory (The opposite of singleton's value)
@@ -200,7 +209,7 @@ class Capsule implements CapsuleInterface
      */
     public function singleton($name, $namespace, $value = [])
     {
-        $this->bind($name, $namespace, $value, true);
+        return $this->bind($name, $namespace, $value, true);
     }
 
     /**
@@ -229,12 +238,88 @@ class Capsule implements CapsuleInterface
     /**
      * Whether or not a singleton has been resolved.
      *
-     * @param string $singleton The name of the singleton that you are checking.
+     * @param mixed $name The name or class of the
+     *                    singleton that you are checking.
      *
      * @return bool Whether or not it has already been resolved
      */
-    public function isResolved($singleton)
+    public function isResolved($name)
     {
-        return $this->resolved[$singleton];
+        if($this->isSingleton($name)) {
+            return $this->resolved[$name];
+        }
+        return false;
+    }
+
+    /**
+     * Determines whether or not a value has been bound to the container.
+     *
+     * @param mixed $name The name or class of the
+     *                    value that you are checking.
+     *
+     * @return bool Whether or not it has been bound.
+     */
+    public function isBound($name)
+    {
+        return isset($this->values[$name]);
+    }
+
+    /**
+     * Determines whether or not a factory has been bound to the container.
+     *
+     * @param mixed $name The name or class of the
+     *                    factory that you are checking.
+     *
+     * @return bool Whether or not the factory has been bound.
+     */
+    public function isFactory($name)
+    {
+        return $this->factories[$name];
+    }
+
+    /**
+     * Determines whether or not a singleton has been bound to the container.
+     *
+     * @param mixed $name The name or class of the
+     *                    singleton that you are checking.
+     *
+     * @return bool Whether or not the singleton has been bound.
+     */
+    public function isSingleton($name)
+    {
+        // Because to be in the resolved array, you must be
+        // A singleton, just check this array to see if the key exists.
+        return isset($this->resolved[$name]);
+    }
+
+    /**
+     * Determines whether or not a namespace has been bound to the container.
+     *
+     * @param mixed $namespace The namespace that you are checking.
+     *
+     * @return bool Whether or not the namespace has been bound.
+     */
+    public function hasNamespace($namespace)
+    {
+        return isset($this->namespaces[$namespace]);
+    }
+
+    /**
+     * Converts a namespace to the name bound to the container.
+     *
+     * @param mixed $namespace The namespace that you are converting.
+     *
+     * @return string
+     */
+    protected function convertNamespace($namespace)
+    {
+        // If the container has the specified
+        // Namespace bound to it return that.
+        if($this->hasNamespace($namespace)) {
+            return $this->namespaces[$namespace];
+        }
+        // Otherwise, assume that the name given is
+        // The name of the service.
+        return $namespace;
     }
 }
