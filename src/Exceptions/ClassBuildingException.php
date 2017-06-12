@@ -11,10 +11,8 @@
 
 namespace Capsule\Exceptions;
 
-use Exception;
-
 /**
- * A general exception thrown in the Capsule.
+ * A exception that is thrown while trying to build a class.
  *
  * @category Exceptions
  * @package  Capsule
@@ -23,7 +21,7 @@ use Exception;
  * @link     https://github.com/Dastur1970
  * @see      http://php.net/manual/en/language.exceptions.php
  */
-class CapsuleException extends Exception
+class ClassBuildingException extends CapsuleException
 {
     //
 }

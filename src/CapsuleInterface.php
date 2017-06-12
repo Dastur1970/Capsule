@@ -117,7 +117,7 @@ interface CapsuleInterface
     /**
      * Determines whether or not a namespace has been bound to the container.
      *
-     * @param mixed $name The namespace that you are checking.
+     * @param mixed $namespace The namespace that you are checking.
      *
      * @return bool Whether or not the namespace has been bound.
      */

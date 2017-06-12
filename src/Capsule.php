@@ -12,6 +12,9 @@
 namespace Capsule;
 
 use Capsule\Exceptions\CapsuleException;
+use Capsule\Exceptions\ClassBuildingException;
+
+use ReflectionClass;
 
 /**
  * A php dependency injection container.
@@ -219,11 +222,112 @@ class Capsule implements CapsuleInterface
      * @param array $parameters An array of primitive parameters.
      *
      * @return mixed The class that has just been resolved.
+     *
+     * @throws Capsule\Exceptions\CapsuleException
      */
     public function make($namespace, array $parameters = [])
     {
-        //
+        // If the namespace given already exists in the container,
+        // The simply return it
+        if ($this->hasNamespace($namespace)) {
+            return $this->get($namespace);
+        }
+
+        // If the developer is trying to make a class that
+        // Doesn't exist, throw a CapsuleException
+        if (! class_exists($namespace)) {
+            throw new CapsuleException(
+                'Cannot make non-existant class ' . $namespace . '.'
+            );
+        }
+
+        // Build the instance at the given namespace.
+        $obj = $this->build($namespace, $parameters);
+        return $obj;
     }
+
+    /**
+     * Build a new instance using the container and reflection.
+     *
+     * @param mixed $namespace The namespace of the class being built.
+     * @param array $parameters The primitive parameters required
+     *                          to build the instance.
+     *
+     * @return mixed The built instance.
+     *
+     * @throws Capsule\Exceptions\ClassBuildingException
+     */
+    protected function build($namespace, array $parameters = [])
+    {
+        // Create a ReflectionClass instance for the given namespace.
+        $reflector = new ReflectionClass($namespace);
+
+        // If the reflector is not instantiable, throw a ClassBuildingException.
+        if (! $reflector->isInstantiable()) {
+            throw new ClassBuildingException(
+                'Trying to build class ' . $namespace
+                . ' that is not instantiable'
+            );
+        }
+        // Get the classes constructer.
+        $constructor = $reflector->getConstructor();
+
+        // If the constructer is null, it means the class has no
+        // Constructer. Therefore we can go ahead and create the class
+        // Without needing to build anything.
+        if (is_null($constructor)) {
+            return new $namespace;
+        }
+
+        // Get the parameters for the build.
+        $parameters = $this->getBuildParameters(
+            $constructor->getParameters(),
+            $parameters
+        );
+
+        return $reflector->newInstanceArgs($parameters);
+    }
+
+    /**
+     * Get the build parameters.
+     *
+     * @param array $parameters The constructor parameters.
+     * @param array $primitives The primitive overrides.
+     *
+     * @return array The array of parameters.
+     */
+    protected function getBuildParameters($parameters, $primitives = [])
+    {
+        $values = [];
+        foreach ($parameters as $parameter) {
+            // If the primitives array has a key with the same
+            // Name as one of the constructer parameters,
+            // Then use that instead.
+            if (isset($primitives[$parameter->getName()])) {
+                $values[] = $primitives[$paramater->getName()];
+                continue;
+            }
+            // Try and get the class from the container.
+            if (! is_null($parameter->getClass())) {
+                $values[] = $this->make($parameter->getClass()->getName());
+                continue;
+            }
+            // If nothing else worked, try to use a parameters default value.
+            if ($parameter->isDefaultValueAvailable()) {
+                $values[] = $parameter->getDefaultValue();
+                continue;
+            }
+            // Throw an error because the given
+            // Constructer parameter can not be resolved.
+            throw new ClassBuildingException(
+                'Can not build class ' . $parameter->getDeclaringClass()
+                . ' because parameter ' . $parameter->getName()
+                . ' can not be resolved.'
+            );
+        }
+        return $values;
+    }
+
 
     /**
      * Get the container instance.
@@ -245,7 +349,7 @@ class Capsule implements CapsuleInterface
      */
     public function isResolved($name)
     {
-        if($this->isSingleton($name)) {
+        if ($this->isSingleton($name)) {
             return $this->resolved[$name];
         }
         return false;
@@ -315,7 +419,7 @@ class Capsule implements CapsuleInterface
     {
         // If the container has the specified
         // Namespace bound to it return that.
-        if($this->hasNamespace($namespace)) {
+        if ($this->hasNamespace($namespace)) {
             return $this->namespaces[$namespace];
         }
         // Otherwise, assume that the name given is
