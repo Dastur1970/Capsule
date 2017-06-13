@@ -20,16 +20,8 @@ namespace Capsule;
  * @license  https://opensource.org/licenses/MIT MIT License
  * @link     https://github.com/Dastur1970
  */
-interface CapsuleInterface
+interface CapsuleInterface extends \Psr\Container\ContainerInterface
 {
-    /**
-     * Get an instance from the container.
-     *
-     * @param mixed $name The name of what is being resolved.
-     *
-     * @return mixed
-     */
-    public function get($name);
 
     /**
      * Bind an instance into the container.
@@ -83,16 +75,6 @@ interface CapsuleInterface
      * @return bool Whether or not it has already been resolved
      */
     public function isResolved($name);
-
-    /**
-     * Determines whether or not a value has been bound to the container.
-     *
-     * @param mixed $name The name or class of the
-     *                    value that you are checking.
-     *
-     * @return bool Whether or not it has been bound.
-     */
-    public function isBound($name);
 
     /**
      * Determines whether or not a factory has been bound to the container.

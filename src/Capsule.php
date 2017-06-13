@@ -13,6 +13,7 @@ namespace Capsule;
 
 use Capsule\Exceptions\CapsuleException;
 use Capsule\Exceptions\ClassBuildingException;
+use Capsule\Exceptions\NotFoundException;
 
 use ReflectionClass;
 
@@ -103,8 +104,8 @@ class Capsule implements CapsuleInterface
         $name = $this->convertNamespace($name);
 
         // Check if the value has been set. If not, throw an exception.
-        if (! $this->isBound($name)) {
-            throw new CapsuleException(
+        if (! $this->has($name)) {
+            throw new NotFoundException(
                 'Can not retrieve non-existant instance '
                 . $name . ' from the container.'
             );
@@ -249,7 +250,7 @@ class Capsule implements CapsuleInterface
     /**
      * Build a new instance using the container and reflection.
      *
-     * @param mixed $namespace The namespace of the class being built.
+     * @param mixed $namespace  The namespace of the class being built.
      * @param array $parameters The primitive parameters required
      *                          to build the instance.
      *
@@ -363,7 +364,7 @@ class Capsule implements CapsuleInterface
      *
      * @return bool Whether or not it has been bound.
      */
-    public function isBound($name)
+    public function has($name)
     {
         return isset($this->values[$name]);
     }

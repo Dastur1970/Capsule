@@ -3,9 +3,14 @@
 use Capsule\Capsule;
 use Capsule\CapsuleInterface;
 use Capsule\Exceptions\CapsuleException;
+use Capsule\Exceptions\NotFoundException;
 
 use Capsule\Tests\Service;
 use Capsule\Tests\ServiceTwo;
+
+use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
+use Psr\Container\ContainerExceptionInterface;
 
 class CapsuleTest extends PHPUnit_Framework_Testcase
 {
@@ -162,7 +167,7 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
         $capsule->bind('service', Service::class, function($c) {
             return new Service();
         });
-        $this->assertTrue($capsule->isBound('service'));
+        $this->assertTrue($capsule->has('service'));
     }
 
     /**
@@ -216,5 +221,16 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
             return new Service();
         });
         $this->assertEquals($capsule, $sameCapsule);
+    }
+
+    public function testClassesArePsrCompliant()
+    {
+        $capsule = new Capsule();
+        $capsuleException = new CapsuleException();
+        $notFoundException = new NotFoundException();
+
+        $this->assertInstanceOf(ContainerInterface::class, $capsule);
+        $this->assertInstanceOf(ContainerExceptionInterface::class, $capsuleException);
+        $this->assertInstanceOf(NotFoundExceptionInterface::class, $notFoundException);
     }
 }
