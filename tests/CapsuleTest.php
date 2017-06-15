@@ -1,4 +1,4 @@
-<?php
+ <?php
 
 use Capsule\Capsule;
 use Capsule\CapsuleInterface;
@@ -7,6 +7,12 @@ use Capsule\Exceptions\NotFoundException;
 
 use Capsule\Tests\Service;
 use Capsule\Tests\ServiceTwo;
+use Capsule\Tests\ServiceThree;
+use Capsule\Tests\NoConstructor;
+use Capsule\Tests\PrivateConstructor;
+use Capsule\Tests\PrimitiveConstructor;
+use Capsule\Tests\ConstructorWithClasses;
+use Capsule\Tests\ConstructorWithDefaults;
 
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -172,7 +178,7 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
 
     /**
      * @expectedException \Capsule\Exceptions\CapsuleException
-     * @expectedExceptionMessage Can not bind to non-existant class Capsule\Capsiale
+     * @expectedExceptionMessage Can not bind to non-existant class Capsiale
      */
     public function testBindingNonExistantClass()
     {
@@ -194,7 +200,7 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
 
     /**
      * @expectedException \Capsule\Exceptions\CapsuleException
-     * @expectedExceptionMessage Can not bind to non-existant class \Capsule\Capsiale
+     * @expectedExceptionMessage Can not bind to non-existant class Capsiale
      */
     public function testBindingNonExistantStringAsClass()
     {
@@ -232,5 +238,99 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
         $this->assertInstanceOf(ContainerInterface::class, $capsule);
         $this->assertInstanceOf(ContainerExceptionInterface::class, $capsuleException);
         $this->assertInstanceOf(NotFoundExceptionInterface::class, $notFoundException);
+    }
+
+    /*
+    |------------------------------------------
+    | All the tests for the making an objects
+    | (Including Build and getBuildParameters)
+    |------------------------------------------
+    */
+
+    public function testMakeReturnsSingleton()
+    {
+        $capsule = new Capsule();
+        $service = new Service();
+        $service->value = 'test';
+        $capsule->singleton('service', Service::class, function($c) use ($service) {
+            return $service;
+        });
+        $this->assertEquals($service, $capsule->make(Service::class));
+    }
+
+    /**
+     * @expectedException \Capsule\Exceptions\ClassBuildingException
+     * @expectedExceptionMessage Cannot make non-existant class Tester.
+     */
+    public function testMakeWithNonExistantNamespace()
+    {
+        $capsule = new Capsule();
+        $capsule->make(Tester::class);
+    }
+
+    /**
+     * @expectedException \Capsule\Exceptions\ClassBuildingException
+     * @expectedExceptionMessage Can not build the class PrivateConstructor as it is not instantiable.
+     */
+    public function testBuildWithPrivateConstructor()
+    {
+        $capsule = new Capsule();
+        $capsule->make(PrivateConstructor::class);
+    }
+
+    public function testBuildWithNoConstructor()
+    {
+        $capsule = new Capsule();
+        $noConstructor = $capsule->make(NoConstructor::class);
+        $this->assertInstanceOf(NoConstructor::class, $noConstructor);
+    }
+
+    public function testBuildingWithPrimitives()
+    {
+        $capsule = new Capsule();
+        $pConstructor = $capsule->make(
+            PrimitiveConstructor::class,
+            [
+                'array' => ['test', 0, ['tester', false]],
+                'int' => 12,
+                'string' => 'cats',
+                'boolean' => true
+            ]
+        );
+        $this->assertInstanceOf(PrimitiveConstructor::class, $pConstructor);
+        $this->assertEquals($pConstructor->array, ['test', 0, ['tester', false]]);
+        $this->assertEquals($pConstructor->int, 12);
+        $this->assertEquals($pConstructor->string, 'cats');
+        $this->assertEquals($pConstructor->boolean, true);
+    }
+
+    public function testBuildingWithClasses()
+    {
+        $capsule = new Capsule();
+        $withClasses = $capsule->make(ConstructorWithClasses::class);
+        $this->assertInstanceOf(ConstructorWithClasses::class, $withClasses);
+        $this->assertInstanceOf(Service::class, $withClasses->service1);
+        $this->assertInstanceOf(ServiceTwo::class, $withClasses->service2);
+        $this->assertInstanceOf(ServiceThree::class, $withClasses->service3);
+    }
+
+    public function testBuildingWithDefaults()
+    {
+        $capsule = new Capsule();
+        $withDefaults = $capsule->make(ConstructorWithDefaults::class);
+        $this->assertInstanceOf(ConstructorWithDefaults::class, $withDefaults);
+        $this->assertEquals($withDefaults->array, ['test', 'test']);
+        $this->assertEquals($withDefaults->string, 'test');
+        $this->assertEquals($withDefaults->int, 12);
+    }
+
+    /**
+     * @expectedException \Capsule\Exceptions\ClassBuildingException
+     * @expectedExceptionMessage Can not build class PrimitiveConstructor because parameter 'array' can not be resolved.
+     */
+    public function testBuildingUnresolvableClass()
+    {
+        $capsule = new Capsule();
+        $capsule->make(PrimitiveConstructor::class);
     }
 }

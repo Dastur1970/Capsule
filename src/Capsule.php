@@ -161,7 +161,8 @@ class Capsule implements CapsuleInterface
         // Class. If not, throw an error.
         if (! class_exists($namespace)) {
             throw new CapsuleException(
-                'Can not bind to non-existant class ' . $namespace
+                'Can not bind to non-existant class '
+                . $this->getClassName($namespace)
             );
         }
 
@@ -228,17 +229,18 @@ class Capsule implements CapsuleInterface
      */
     public function make($namespace, array $parameters = [])
     {
-        // If the namespace given already exists in the container,
-        // The simply return it
-        if ($this->hasNamespace($namespace)) {
+        // If it already exists as a singleton in
+        // The container, return it
+        if ($this->isSingleton($this->convertNamespace($namespace))) {
             return $this->get($namespace);
         }
 
         // If the developer is trying to make a class that
         // Doesn't exist, throw a CapsuleException
         if (! class_exists($namespace)) {
-            throw new CapsuleException(
-                'Cannot make non-existant class ' . $namespace . '.'
+            throw new ClassBuildingException(
+                'Cannot make non-existant class '
+                . $this->getClassName($namespace) . '.'
             );
         }
 
@@ -266,8 +268,8 @@ class Capsule implements CapsuleInterface
         // If the reflector is not instantiable, throw a ClassBuildingException.
         if (! $reflector->isInstantiable()) {
             throw new ClassBuildingException(
-                'Trying to build class ' . $namespace
-                . ' that is not instantiable'
+                'Can not build the class ' . $this->getClassName($namespace)
+                . ' as it is not instantiable.'
             );
         }
         // Get the classes constructer.
@@ -303,9 +305,11 @@ class Capsule implements CapsuleInterface
         foreach ($parameters as $parameter) {
             // If the primitives array has a key with the same
             // Name as one of the constructer parameters,
-            // Then use that instead.
+            // Then use that instead. Although the variable is
+            // Called primitives, you may override classes as well
+            $paramName = $parameter->getName();
             if (isset($primitives[$parameter->getName()])) {
-                $values[] = $primitives[$paramater->getName()];
+                $values[] = $primitives[$paramName];
                 continue;
             }
             // Try and get the class from the container.
@@ -321,9 +325,10 @@ class Capsule implements CapsuleInterface
             // Throw an error because the given
             // Constructer parameter can not be resolved.
             throw new ClassBuildingException(
-                'Can not build class ' . $parameter->getDeclaringClass()
-                . ' because parameter ' . $parameter->getName()
-                . ' can not be resolved.'
+                'Can not build class '
+                . $parameter->getDeclaringClass()->getShortName()
+                . ' because parameter \'' . $paramName
+                . '\' can not be resolved.'
             );
         }
         return $values;
@@ -426,5 +431,19 @@ class Capsule implements CapsuleInterface
         // Otherwise, assume that the name given is
         // The name of the service.
         return $namespace;
+    }
+
+    /**
+     * Get a classes name from a class constant or string.
+     *
+     * @param mixed $namespace The namespace that you are retrieving
+     *                         the name from.
+     *
+     * @return string
+     */
+    protected function getClassName($namespace)
+    {
+        $parts = explode('\\', $namespace);
+        return $parts[count($parts) - 1];
     }
 }
