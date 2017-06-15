@@ -18,12 +18,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Capsule\\": "src"
+            "Dastur\\Capsule\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Capsule\\Tests\\": "tests/fixtures"
+            "Dastur\\Capsule\\Tests\\": "tests/fixtures"
         }
     }
 }

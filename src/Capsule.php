@@ -9,11 +9,11 @@
  * @link     https://github.com/Dastur1970
  */
 
-namespace Capsule;
+namespace Dastur\Capsule;
 
-use Capsule\Exceptions\CapsuleException;
-use Capsule\Exceptions\ClassBuildingException;
-use Capsule\Exceptions\NotFoundException;
+use Dastur\Capsule\Exceptions\CapsuleException;
+use Dastur\Capsule\Exceptions\ClassBuildingException;
+use Dastur\Capsule\Exceptions\NotFoundException;
 
 use ReflectionClass;
 

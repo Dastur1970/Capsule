@@ -9,7 +9,7 @@
  * @link     https://github.com/Dastur1970
  */
 
-namespace Capsule\Exceptions;
+namespace Dastur\Capsule\Exceptions;
 
 /**
  * A exception that is thrown while trying to build a class.

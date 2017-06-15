@@ -1,18 +1,18 @@
  <?php
 
-use Capsule\Capsule;
-use Capsule\CapsuleInterface;
-use Capsule\Exceptions\CapsuleException;
-use Capsule\Exceptions\NotFoundException;
+use Dastur\Capsule\Capsule;
+use Dastur\Capsule\CapsuleInterface;
+use Dastur\Capsule\Exceptions\CapsuleException;
+use Dastur\Capsule\Exceptions\NotFoundException;
 
-use Capsule\Tests\Service;
-use Capsule\Tests\ServiceTwo;
-use Capsule\Tests\ServiceThree;
-use Capsule\Tests\NoConstructor;
-use Capsule\Tests\PrivateConstructor;
-use Capsule\Tests\PrimitiveConstructor;
-use Capsule\Tests\ConstructorWithClasses;
-use Capsule\Tests\ConstructorWithDefaults;
+use Dastur\Capsule\Tests\Service;
+use Dastur\Capsule\Tests\ServiceTwo;
+use Dastur\Capsule\Tests\ServiceThree;
+use Dastur\Capsule\Tests\NoConstructor;
+use Dastur\Capsule\Tests\PrivateConstructor;
+use Dastur\Capsule\Tests\PrimitiveConstructor;
+use Dastur\Capsule\Tests\ConstructorWithClasses;
+use Dastur\Capsule\Tests\ConstructorWithDefaults;
 
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -32,7 +32,7 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
     }
 
     /**
-     * @expectedException \Capsule\Exceptions\CapsuleException
+     * @expectedException \Dastur\Capsule\Exceptions\CapsuleException
      * @expectedExceptionMessage Can not retrieve non-existant instance nonexistant from the container.
      */
     public function testValueIsNotSet()
@@ -151,7 +151,7 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
     }
 
     /**
-     * @expectedException \Capsule\Exceptions\CapsuleException
+     * @expectedException \Dastur\Capsule\Exceptions\CapsuleException
      * @expectedExceptionMessage The singleton service has already been resolved!
      */
     public function testBindingResolvedSingleton()
@@ -177,7 +177,7 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
     }
 
     /**
-     * @expectedException \Capsule\Exceptions\CapsuleException
+     * @expectedException \Dastur\Capsule\Exceptions\CapsuleException
      * @expectedExceptionMessage Can not bind to non-existant class Capsiale
      */
     public function testBindingNonExistantClass()
@@ -192,26 +192,26 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
     public function testBindingStringAsClass()
     {
         $capsule = new Capsule();
-        $capsule->bind('service', '\\Capsule\\Tests\\Service', function($c) {
+        $capsule->bind('service', '\\Dastur\\Capsule\\Tests\\Service', function($c) {
             return new Service();
         });
         $this->assertTrue($capsule->hasNamespace(Service::class));
     }
 
     /**
-     * @expectedException \Capsule\Exceptions\CapsuleException
+     * @expectedException \Dastur\Capsule\Exceptions\CapsuleException
      * @expectedExceptionMessage Can not bind to non-existant class Capsiale
      */
     public function testBindingNonExistantStringAsClass()
     {
         $capsule = new Capsule();
-        $capsule->bind('service', '\\Capsule\\Capsiale', function($c) {
+        $capsule->bind('service', '\\Dastur\\Capsule\\Capsiale', function($c) {
             return new Service();
         });
     }
 
     /**
-     * @expectedException \Capsule\Exceptions\CapsuleException
+     * @expectedException \Dastur\Capsule\Exceptions\CapsuleException
      * @expectedExceptionMessage Could not bind service to the container, the given value is not an array of primitives or a callable.
      */
     public function testBindingWithoutThirdParameterCallableOrArray()
@@ -259,7 +259,7 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
     }
 
     /**
-     * @expectedException \Capsule\Exceptions\ClassBuildingException
+     * @expectedException \Dastur\Capsule\Exceptions\ClassBuildingException
      * @expectedExceptionMessage Cannot make non-existant class Tester.
      */
     public function testMakeWithNonExistantNamespace()
@@ -269,7 +269,7 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
     }
 
     /**
-     * @expectedException \Capsule\Exceptions\ClassBuildingException
+     * @expectedException \Dastur\Capsule\Exceptions\ClassBuildingException
      * @expectedExceptionMessage Can not build the class PrivateConstructor as it is not instantiable.
      */
     public function testBuildWithPrivateConstructor()
@@ -325,7 +325,7 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
     }
 
     /**
-     * @expectedException \Capsule\Exceptions\ClassBuildingException
+     * @expectedException \Dastur\Capsule\Exceptions\ClassBuildingException
      * @expectedExceptionMessage Can not build class PrimitiveConstructor because parameter 'array' can not be resolved.
      */
     public function testBuildingUnresolvableClass()

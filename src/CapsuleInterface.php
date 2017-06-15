@@ -9,7 +9,7 @@
  * @link     https://github.com/Dastur1970
  */
 
-namespace Capsule;
+namespace Dastur\Capsule;
 
 /**
  * The interface for the php dependency injection container.

@@ -1,6 +1,6 @@
 <?php
 
-namespace Capsule\Tests;
+namespace Dastur\Capsule\Tests;
 
 class PrivateConstructor
 {
