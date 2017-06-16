@@ -33,12 +33,12 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
 
     /**
      * @expectedException \Dastur\Capsule\Exceptions\CapsuleException
-     * @expectedExceptionMessage Can not retrieve non-existant instance nonexistant from the container.
+     * @expectedExceptionMessage Can not retrieve non-existant instance 'fake' from the container.
      */
     public function testValueIsNotSet()
     {
         $capsule = new Capsule();
-        $capsule->get('nonexistant');
+        $capsule->get('fake');
         $this->expectException(CapsuleException::class);
     }
 
@@ -152,7 +152,7 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
 
     /**
      * @expectedException \Dastur\Capsule\Exceptions\CapsuleException
-     * @expectedExceptionMessage The singleton service has already been resolved!
+     * @expectedExceptionMessage The singleton 'service' has already been resolved.
      */
     public function testBindingResolvedSingleton()
     {
@@ -178,7 +178,7 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
 
     /**
      * @expectedException \Dastur\Capsule\Exceptions\CapsuleException
-     * @expectedExceptionMessage Can not bind to non-existant class Capsiale
+     * @expectedExceptionMessage Can not bind to non-existant class 'Capsiale'.
      */
     public function testBindingNonExistantClass()
     {
@@ -200,7 +200,7 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
 
     /**
      * @expectedException \Dastur\Capsule\Exceptions\CapsuleException
-     * @expectedExceptionMessage Can not bind to non-existant class Capsiale
+     * @expectedExceptionMessage Can not bind to non-existant class 'Capsiale'.
      */
     public function testBindingNonExistantStringAsClass()
     {
@@ -212,7 +212,7 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
 
     /**
      * @expectedException \Dastur\Capsule\Exceptions\CapsuleException
-     * @expectedExceptionMessage Could not bind service to the container, the given value is not an array of primitives or a callable.
+     * @expectedExceptionMessage Could not bind 'service' to the container, the given value is not an array of primitives or a callable.
      */
     public function testBindingWithoutThirdParameterCallableOrArray()
     {
@@ -260,7 +260,7 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
 
     /**
      * @expectedException \Dastur\Capsule\Exceptions\ClassBuildingException
-     * @expectedExceptionMessage Cannot make non-existant class Tester.
+     * @expectedExceptionMessage Cannot make non-existant class 'Tester'.
      */
     public function testMakeWithNonExistantNamespace()
     {
@@ -270,7 +270,7 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
 
     /**
      * @expectedException \Dastur\Capsule\Exceptions\ClassBuildingException
-     * @expectedExceptionMessage Can not build the class PrivateConstructor as it is not instantiable.
+     * @expectedExceptionMessage Can not build the class 'PrivateConstructor' as it is not instantiable.
      */
     public function testBuildWithPrivateConstructor()
     {
@@ -326,11 +326,49 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
 
     /**
      * @expectedException \Dastur\Capsule\Exceptions\ClassBuildingException
-     * @expectedExceptionMessage Can not build class PrimitiveConstructor because parameter 'array' can not be resolved.
+     * @expectedExceptionMessage Can not build class 'PrimitiveConstructor' because parameter 'array' can not be resolved.
      */
     public function testBuildingUnresolvableClass()
     {
         $capsule = new Capsule();
         $capsule->make(PrimitiveConstructor::class);
+    }
+
+    /**
+     * @expectedException \Dastur\Capsule\Exceptions\CapsuleException
+     * @expectedExceptionMessage Can not destroy 'Fake' because it does not exist.
+     */
+    public function testDestroyWithFakeName()
+    {
+        $capsule = new Capsule();
+        $capsule->destroy('Fake');
+    }
+
+    /**
+     * @expectedException \Dastur\Capsule\Exceptions\CapsuleException
+     * @expectedExceptionMessage Can not retrieve non-existant instance 'service' from the container.
+     */
+    public function testDestroyingInstance()
+    {
+        $capsule = new Capsule();
+        $capsule->bind('service', Service::class, function($c) {
+            return new Service();
+        });
+        $capsule->destroy('service');
+        $capsule->get('service');
+    }
+
+    /**
+     * @expectedException \Dastur\Capsule\Exceptions\CapsuleException
+     * @expectedExceptionMessage Can not retrieve non-existant instance 'Service' from the container.
+     */
+    public function testDestroyingInstanceWithNamespace()
+    {
+        $capsule = new Capsule();
+        $capsule->bind('service', Service::class, function($c) {
+            return new Service();
+        });
+        $capsule->destroy(Service::class);
+        $capsule->get(Service::class);
     }
 }

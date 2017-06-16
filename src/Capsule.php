@@ -16,6 +16,7 @@ use Dastur\Capsule\Exceptions\ClassBuildingException;
 use Dastur\Capsule\Exceptions\NotFoundException;
 
 use ReflectionClass;
+use ArrayAccess;
 
 /**
  * A php dependency injection container.
@@ -27,7 +28,7 @@ use ReflectionClass;
  * @link     https://github.com/Dastur1970
  * @see      Capsule\CapsuleInterface
  */
-class Capsule implements CapsuleInterface
+class Capsule implements CapsuleInterface, ArrayAccess
 {
     /**
      * The container instance.
@@ -96,6 +97,8 @@ class Capsule implements CapsuleInterface
      * @param mixed $name The name of what is being resolved.
      *
      * @return mixed
+     *
+     * @throws Dastur\Capsule\Exceptions\NotFoundException
      */
     public function get($name)
     {
@@ -106,8 +109,8 @@ class Capsule implements CapsuleInterface
         // Check if the value has been set. If not, throw an exception.
         if (! $this->has($name)) {
             throw new NotFoundException(
-                'Can not retrieve non-existant instance '
-                . $name . ' from the container.'
+                'Can not retrieve non-existant instance \''
+                . $this->getClassName($name) . '\' from the container.'
             );
         }
 
@@ -148,7 +151,7 @@ class Capsule implements CapsuleInterface
         // Throwna CapsuleException
         if ($this->isResolved($name)) {
             throw new CapsuleException(
-                'The singleton ' . $name . ' has already been resolved!'
+                'The singleton \'' . $name . '\' has already been resolved.'
             );
         }
 
@@ -161,8 +164,8 @@ class Capsule implements CapsuleInterface
         // Class. If not, throw an error.
         if (! class_exists($namespace)) {
             throw new CapsuleException(
-                'Can not bind to non-existant class '
-                . $this->getClassName($namespace)
+                'Can not bind to non-existant class \''
+                . $this->getClassName($namespace) . '\'.'
             );
         }
 
@@ -190,8 +193,8 @@ class Capsule implements CapsuleInterface
         } elseif (!is_callable($value)) {
             // Otherwise, if it's not callable, the throw an error.
             throw new CapsuleException(
-                'Could not bind ' . $name
-                . ' to the container, the given value is not an'
+                'Could not bind \'' . $name
+                . '\' to the container, the given value is not an'
                 . ' array of primitives or a callable.'
             );
         }
@@ -225,7 +228,7 @@ class Capsule implements CapsuleInterface
      *
      * @return mixed The class that has just been resolved.
      *
-     * @throws Capsule\Exceptions\CapsuleException
+     * @throws Capsule\Exceptions\ClassBuildingException
      */
     public function make($namespace, array $parameters = [])
     {
@@ -239,8 +242,8 @@ class Capsule implements CapsuleInterface
         // Doesn't exist, throw a CapsuleException
         if (! class_exists($namespace)) {
             throw new ClassBuildingException(
-                'Cannot make non-existant class '
-                . $this->getClassName($namespace) . '.'
+                'Cannot make non-existant class \''
+                . $this->getClassName($namespace) . '\'.'
             );
         }
 
@@ -268,8 +271,8 @@ class Capsule implements CapsuleInterface
         // If the reflector is not instantiable, throw a ClassBuildingException.
         if (! $reflector->isInstantiable()) {
             throw new ClassBuildingException(
-                'Can not build the class ' . $this->getClassName($namespace)
-                . ' as it is not instantiable.'
+                'Can not build the class \'' . $this->getClassName($namespace)
+                . '\' as it is not instantiable.'
             );
         }
         // Get the classes constructer.
@@ -298,6 +301,8 @@ class Capsule implements CapsuleInterface
      * @param array $primitives The primitive overrides.
      *
      * @return array The array of parameters.
+     *
+     * @throws Dastur\Capsule\Exceptions\ClassBuildingException
      */
     protected function getBuildParameters($parameters, $primitives = [])
     {
@@ -325,15 +330,45 @@ class Capsule implements CapsuleInterface
             // Throw an error because the given
             // Constructer parameter can not be resolved.
             throw new ClassBuildingException(
-                'Can not build class '
+                'Can not build class \''
                 . $parameter->getDeclaringClass()->getShortName()
-                . ' because parameter \'' . $paramName
+                . '\' because parameter \'' . $paramName
                 . '\' can not be resolved.'
             );
         }
         return $values;
     }
 
+    /**
+     * Destroy a instance binded to the container.
+     *
+     * @param mixed $name Either the name or namespace
+     *                    of the class being destroyed.
+     *
+     * @return void
+     *
+     * @throws Dastur\Capsule\Exceptions\CapsuleException
+     */
+    public function destroy($name)
+    {
+        // Convert the potential namespace into a name.
+        $name = $this->convertNamespace($name);
+
+        // Throw an exception if the name does exist within the capsule.
+        if (! $this->has($name)) {
+            throw new CapsuleException(
+                "Can not destroy '" . $name . "' because it does not exist."
+            );
+        }
+
+        // Unset every possible trace of it from the container.
+        if ($this->isSingleton($name)) {
+            unset($this->resolved[$name]);
+        }
+        unset($this->factories[$name]);
+        unset($this->values[$name]);
+        unset($this->namespaces[array_search($name, $this->namespaces)]);
+    }
 
     /**
      * Get the container instance.
@@ -371,6 +406,7 @@ class Capsule implements CapsuleInterface
      */
     public function has($name)
     {
+        $name = $this->convertNamespace($name);
         return isset($this->values[$name]);
     }
 
@@ -445,5 +481,129 @@ class Capsule implements CapsuleInterface
     {
         $parts = explode('\\', $namespace);
         return $parts[count($parts) - 1];
+    }
+
+    /*
+     |--------------------------------------
+     | Magic Methods and Array
+     |--------------------------------------
+     */
+
+     /**
+      * Get an instance from the container.
+      *
+      * @param mixed $offset The name of what is being resolved.
+      *
+      * @return mixed
+      *
+      * @throws Dastur\Capsule\Exceptions\NotFoundException
+      */
+    public function offsetGet($offset)
+    {
+        return $this->get($offset);
+    }
+
+    /**
+     * Get developers to use bind instead of offsetSet
+     *
+     * @param mixed $offset The name of what is being set.
+     * @param mixed $value  The value of what is being set.
+     *
+     * @return void
+     *
+     * @throws Dastur\Capsule\Exceptions\CapsuleException
+     */
+    public function offsetSet($offset, $value)
+    {
+        throw new CapsuleException(
+            'To bind to the container, use the the bind method instead.'
+        );
+    }
+
+    /**
+     * Determines whether or not a value has been bound to the container.
+     *
+     * @param mixed $offset The name or class of the
+     *                      value that you are checking.
+     *
+     * @return bool Whether or not it has been bound.
+     */
+    public function offsetExists($offset)
+    {
+        return $this->has($offset);
+    }
+
+    /**
+     * Destroy a instance binded to the container.
+     *
+     * @param mixed $offset Either the name or namespace
+     *                      of the class being destroyed.
+     *
+     * @return void
+     *
+     * @throws Dastur\Capsule\Exceptions\CapsuleException
+     */
+    public function offsetUnset($offset)
+    {
+        $this->destroy($offset);
+    }
+
+    /**
+     * Get an instance from the container.
+     *
+     * @param string $name The name of what is being resolved.
+     *
+     * @return mixed
+     *
+     * @throws Dastur\Capsule\Exceptions\NotFoundException
+     */
+    public function __get($name)
+    {
+        return $this->get($name);
+    }
+
+    /**
+     * Get developers to use bind instead of __get
+     *
+     * @param string $name  The name of what is being set.
+     * @param mixed  $value The value of what is being set.
+     *
+     * @return void
+     *
+     * @throws Dastur\Capsule\Exceptions\CapsuleException
+     */
+    public function __set($name, $value)
+    {
+        throw new CapsuleException(
+            'To bind to the container, use the the bind method instead.'
+        );
+    }
+
+    /**
+     * Determines whether or not a value has been bound to the container.
+     *
+     * @param string $name The name or class of the
+     *                     value that you are checking.
+     *
+     * @return bool Whether or not it has been bound.
+     */
+    public function __isset($name)
+    {
+        return $this->has($name);
+    }
+
+    /**
+     * Destroy a instance binded to the container.
+     *
+     * @param string $name Either the name or namespace
+     *                     of the class being destroyed.
+     *
+     * @return void
+     *
+     * @throws Dastur\Capsule\Exceptions\CapsuleException
+     */
+    public function __unset($name)
+    {
+        return $this->destroy($name);
     }
 }

@@ -60,6 +60,16 @@ interface CapsuleInterface extends \Psr\Container\ContainerInterface
     public function make($namespace, array $parameters = []);
 
     /**
+     * Destroy a instance binded to the container.
+     *
+     * @param mixed $name Either the name or namespace
+     *                    of the class being destroyed.
+     *
+     * @return void
+     */
+    public function destroy($name);
+
+    /**
      * Get the container instance.
      *
      * @return Capsule\Capsule The container instance.
