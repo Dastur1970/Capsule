@@ -19,7 +19,11 @@ If you would like to make sure none of your dependencies are hidden, you can use
 
 ### Composer
 
-Will add instructions here once I set it up on packagist.
+Run the following command from your projects base directory:
+
+```
+composer require dastur\dastur
+```
 
 ## Usage
 
@@ -192,7 +196,7 @@ unset($capsule->service) or unset($capsule['service'])
 
 ## Contribute
 
-This repository is accepting contributions. Check out the [Contributing](CONTRUBTING) guide.
+This repository is accepting contributions. Check out the [Contributing](CONTRIBUTING.md) guide.
 
 ## License
 
