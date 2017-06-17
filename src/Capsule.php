@@ -221,6 +221,42 @@ class Capsule implements CapsuleInterface, ArrayAccess
     }
 
     /**
+     * Bind an existant instance into the container.
+     *
+     * @param mixed $name      The name of what is being set.
+     * @param mixed $namespace The class constant of the object being set.
+     * @param mixed $value     The class being passed in.
+     *
+     * @return Capsule\Capsule The container instance.
+     *
+     * @throws Capsule\Exceptions\CapsuleException
+     */
+    public function instance($name, $namespace, $value = null)
+    {
+        // If value is null, it means it hasn't been set.
+        // That means they are either not using an alias or they
+        // Are not using a namespace.
+        if (is_null($value)) {
+            $value = $namespace;
+            // If $name is an existant class, they are not using an alias,
+            // They are binding to a namespace.
+            if (class_exists($name)) {
+                // Set it to itself because the alias we will be using
+                // Is also it's namespace.
+                $this->namespaces[$name] = $name;
+            }
+        } else {
+            $this->namespaces[$namespace] = $name;
+        }
+        $this->values[$name] = $value;
+        // All instances have already been resolved because they
+        // Are not using closures to enter the capsule.
+        $this->resolved[$name] = true;
+        $this->factories[$name] = false;
+        return $this;
+    }
+
+    /**
      * Make a class by resolving it's dependencies from the container.
      *
      * @param mixed $namespace  The class constant for what is being made.

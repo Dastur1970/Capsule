@@ -371,4 +371,57 @@ class CapsuleTest extends PHPUnit_Framework_Testcase
         $capsule->destroy(Service::class);
         $capsule->get(Service::class);
     }
+
+    public function testSettingInstance()
+    {
+         $capsule = new Capsule();
+         $capsule->instance('capsule', Capsule::class, $capsule);
+         // Test that changes update.
+         $capsule->bind('service', Service::class);
+         $this->assertEquals($capsule->get('capsule'), $capsule);
+    }
+
+    public function testGettingInstanceWithNamespace()
+    {
+        $capsule = new Capsule();
+        $capsule->instance('capsule', Capsule::class, $capsule);
+        $this->assertEquals($capsule->get(Capsule::class), $capsule);
+    }
+
+    public function testSettingInstanceWithNamespace()
+    {
+        $capsule = new Capsule();
+        $capsule->instance('capsule', $capsule);
+        $this->assertEquals($capsule->get('capsule'), $capsule);
+    }
+
+    public function testSettingInstanceWithAlias()
+    {
+        $capsule = new Capsule();
+        $capsule->instance(Capsule::class, $capsule);
+        $this->assertEquals($capsule->get(Capsule::class), $capsule);
+    }
+
+    public function testInstanceIsResolved()
+    {
+        $capsule = new Capsule();
+        $capsule->instance('capsule', $capsule);
+        $this->assertTrue($capsule->isResolved('capsule'));
+    }
+
+    public function testInstanceIsNotFactory()
+    {
+        $capsule = new Capsule();
+        $capsule->instance('capsule', $capsule);
+        $this->assertFalse($capsule->isFactory('capsule'));
+    }
+
+    public function testInstanceGetsResolvedAsParameter()
+    {
+        $capsule = new Capsule();
+        $service = $capsule->make(Service::class);
+        $capsule->instance(Service::class, $service);
+        $cWithC = $capsule->make(ConstructorWithClasses::class);
+        $this->assertEquals($cWithC->service1, $service);
+    }
 }

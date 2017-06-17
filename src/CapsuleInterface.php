@@ -50,6 +50,19 @@ interface CapsuleInterface extends \Psr\Container\ContainerInterface
     public function singleton($name, $namespace, $value = []);
 
     /**
+     * Bind an existant instance into the container.
+     *
+     * @param mixed $name      The name of what is being set.
+     * @param mixed $namespace The class constant of the object being set.
+     * @param mixed $value     The class being passed in.
+     *
+     * @return Capsule\Capsule The container instance.
+     *
+     * @throws Capsule\Exceptions\CapsuleException
+     */
+    public function instance($name, $namespace, $value = null);
+
+    /**
      * Make a class by resolving it's dependencies from the container.
      *
      * @param mixed $namespace  The class constant for what is being made.
